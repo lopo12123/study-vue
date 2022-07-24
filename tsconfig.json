@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "sourceMap": true,
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "strict": false,
+        "resolveJsonModule": true,
+        // 允许适用 es6 语法引入 cjs 模块
+        "esModuleInterop": true,
+        "jsx": "preserve",
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "@minivue/*": [
+                "packages/*/src"
+            ]
+        }
+    }
+}
