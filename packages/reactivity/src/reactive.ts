@@ -1,12 +1,8 @@
 import { isObject } from "@minivue/shared";
+import { mutableHandlers, ReactiveFlags } from "./baseHandlers";
 
 // 缓存
 const reactiveMap = new WeakMap();
-
-// 代理标识
-const enum ReactiveFlags {
-    IS_REACTIVE = '__v_isReactive'
-}
 
 const reactive = (target) => {
     // 判断是否是对象 (基础类型不行)
@@ -24,18 +20,7 @@ const reactive = (target) => {
     if(existingProxy) return existingProxy
 
     // 实现代理
-    const proxy = new Proxy(target, {
-        get(target: any, key: string | symbol, receiver: any): any {
-            // 标识
-            if(key === ReactiveFlags.IS_REACTIVE) return true
-
-            // 取值
-            return Reflect.get(target, key, receiver)
-        },
-        set(target: any, key: string | symbol, value: any, receiver: any): boolean {
-            return Reflect.set(target, key, value, receiver)
-        }
-    })
+    const proxy = new Proxy(target, mutableHandlers)
 
     // 缓存(存储)
     reactiveMap.set(target, proxy)
