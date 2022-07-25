@@ -3,6 +3,8 @@ node_modules
 /dist
 /dist.*
 
+dist
+
 # packaged file
 *.7z
 *.zip
