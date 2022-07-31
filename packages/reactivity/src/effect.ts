@@ -1,10 +1,21 @@
 let activeEffect: ReactiveEffect = undefined
 
+const cleanupEffect = (effect: ReactiveEffect) => {
+    // deps 是 Set<ReactiveEffect>[]
+    const { deps } = effect
+    for (let i = 0; i < deps.length; i++) {
+        // 解除effect, 重新依赖收集
+        deps[i].delete(effect)
+    }
+    // 重置effect
+    effect.deps.length = 0
+}
+
 class ReactiveEffect {
     // 嵌套的外层effect
     public parent = null
     // 依赖收集 - 双向记忆
-    public deps = []
+    public deps: Set<ReactiveEffect>[] = []
     // effect 默认是激活状态
     public active = true
 
@@ -24,6 +35,10 @@ class ReactiveEffect {
             this.parent = activeEffect
             // 标识当前激活的effect
             activeEffect = this
+
+            // 此处需要在执行用户函数前将之前收集的内容清空
+            cleanupEffect(this)
+
             return this.fn()
         } finally {
             // effect嵌套的解决方案: 退出当前effect时, activeEffect指向外层effect(或者undefined)
@@ -74,12 +89,17 @@ const trigger = (target, type, key, value, oldValue) => {
     if(!depsMap) return;
 
     // 获取属性对应的effect(Set集合)
-    const effects = depsMap.get(key)
-    effects && effects.forEach(effect => {
-        // 当正在执行effect时又要调用自己
-        // 则需要屏蔽掉, 否则会无限调用死循环
-        if(activeEffect !== effect) effect.run()
-    })
+    let effects = depsMap.get(key)
+
+    // 在执行前先拷贝一份, 不要关联引用
+    if(effects) {
+        effects = new Set(effects)
+        effects.forEach(effect => {
+            // 当正在执行effect时又要调用自己
+            // 则需要屏蔽掉, 否则会无限调用死循环
+            if(activeEffect !== effect) effect.run()
+        })
+    }
 }
 
 export {
