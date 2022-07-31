@@ -4,7 +4,7 @@ import { mutableHandlers, ReactiveFlags } from "./baseHandlers";
 // 缓存
 const reactiveMap = new WeakMap();
 
-const reactive = (target) => {
+const reactive = <T extends object>(target: T): T => {
     // 判断是否是对象 (基础类型不行)
     if(!isObject(target)) {
         throw new Error('reactive can only used for object.')

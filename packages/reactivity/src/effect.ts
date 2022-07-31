@@ -1,22 +1,39 @@
-let activeEffect = undefined
+let activeEffect: ReactiveEffect = undefined
 
 class ReactiveEffect {
-    public active = true  // effect 默认是激活状态
+    // 嵌套的外层effect
+    public parent = null
+    // 依赖收集 - 双向记忆
+    public deps = []
+    // effect 默认是激活状态
+    public active = true
+
     constructor(public fn) {
     }
 
     // 执行 effect
     run() {
         // 如果非激活状态, 则只需要执行函数, 不需要依赖收集
-        if(!this.active) this.fn()
+        if(!this.active) {
+            return this.fn()
+        }
 
         // 依赖收集  核心是将当前的 effect 和 稍后渲染的属性关联起来
         try {
+            // effect嵌套的解决方案: 使用parent字段存储外层的effect
+            this.parent = activeEffect
+            // 标识当前激活的effect
             activeEffect = this
-            this.fn()
-        }finally {
-            activeEffect = undefined
+            return this.fn()
+        } finally {
+            // effect嵌套的解决方案: 退出当前effect时, activeEffect指向外层effect(或者undefined)
+            activeEffect = this.parent
+            this.parent = null
         }
+    }
+
+    stop() {
+        this.active = false
     }
 }
 
@@ -26,7 +43,48 @@ const effect = (fn) => {
     _effect.run()  // 默认先执行一次
 }
 
+// 依赖收集
+// WeakMap: { 对象: Map<name: Set<effect>> }
+const targetMap = new WeakMap<object, Map<string, Set<ReactiveEffect>>>()
+const track = (target, type, key) => {
+    // 只有在effect中才进行收集
+    if(!activeEffect) return;
+
+    // 以下类似 entry_or_insert
+    let depsMap: Map<string, Set<ReactiveEffect>> = targetMap.get(target)
+    if(!depsMap) {
+        targetMap.set(target, (depsMap = new Map()))
+    }
+    let dep = depsMap.get(key)
+    if(!dep) {
+        depsMap.set(key, (dep = new Set()))
+    }
+    let shouldTrack = !dep.has(activeEffect)
+    if(shouldTrack) {
+        dep.add(activeEffect)
+        // 让effect也记录对应的dep
+        activeEffect.deps.push(dep)
+    }
+}
+
+const trigger = (target, type, key, value, oldValue) => {
+    const depsMap = targetMap.get(target)
+
+    // 触发的值不在模板中使用
+    if(!depsMap) return;
+
+    // 获取属性对应的effect(Set集合)
+    const effects = depsMap.get(key)
+    effects && effects.forEach(effect => {
+        // 当正在执行effect时又要调用自己
+        // 则需要屏蔽掉, 否则会无限调用死循环
+        if(activeEffect !== effect) effect.run()
+    })
+}
+
 export {
     effect,
-    activeEffect
+    activeEffect,
+    track,
+    trigger
 }
