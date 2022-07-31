@@ -19,7 +19,7 @@ class ReactiveEffect {
     // effect 默认是激活状态
     public active = true
 
-    constructor(public fn) {
+    constructor(public fn, public scheduler) {
     }
 
     // 执行 effect
@@ -48,14 +48,25 @@ class ReactiveEffect {
     }
 
     stop() {
-        this.active = false
+        if(this.active) {
+            // 禁用激活状态
+            this.active = false
+            // 清除依赖
+            cleanupEffect(this)
+        }
     }
 }
 
-const effect = (fn) => {
+const effect = (fn, options: any = {}) => {
     // fn 可以根据状态变化重新执行, effect可以嵌套写
-    const _effect = new ReactiveEffect(fn)
+    const _effect = new ReactiveEffect(fn, options.scheduler)
     _effect.run()  // 默认先执行一次
+
+    // effect的返回值
+    const runner = _effect.run.bind(_effect)
+    runner.effect = _effect
+
+    return runner
 }
 
 // 依赖收集
@@ -97,7 +108,16 @@ const trigger = (target, type, key, value, oldValue) => {
         effects.forEach(effect => {
             // 当正在执行effect时又要调用自己
             // 则需要屏蔽掉, 否则会无限调用死循环
-            if(activeEffect !== effect) effect.run()
+            if(activeEffect !== effect) {
+                // 如果有调度器, 则使用调度器
+                if(effect.scheduler) {
+                    effect.scheduler()
+                }
+                // 无调度器则直接执行(默认)
+                else {
+                    effect.run()
+                }
+            }
         })
     }
 }
