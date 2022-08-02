@@ -85,11 +85,16 @@ const track = (target, type, key) => {
     if(!dep) {
         depsMap.set(key, (dep = new Set()))
     }
-    let shouldTrack = !dep.has(activeEffect)
-    if(shouldTrack) {
-        dep.add(activeEffect)
-        // 让effect也记录对应的dep
-        activeEffect.deps.push(dep)
+    trackEffects(dep)
+}
+const trackEffects = (dep: Set<ReactiveEffect>) => {
+    if(activeEffect) {
+        let shouldTrack = !dep.has(activeEffect)
+        if(shouldTrack) {
+            dep.add(activeEffect)
+            // 让effect也记录对应的dep
+            activeEffect.deps.push(dep)
+        }
     }
 }
 
@@ -103,6 +108,9 @@ const trigger = (target, type, key, value, oldValue) => {
     let effects = depsMap.get(key)
 
     // 在执行前先拷贝一份, 不要关联引用
+    triggerEffects(effects)
+}
+const triggerEffects = (effects: Set<ReactiveEffect>) => {
     if(effects) {
         effects = new Set(effects)
         effects.forEach(effect => {
@@ -124,7 +132,10 @@ const trigger = (target, type, key, value, oldValue) => {
 
 export {
     effect,
+    ReactiveEffect,
     activeEffect,
     track,
-    trigger
+    trackEffects,
+    trigger,
+    triggerEffects,
 }
