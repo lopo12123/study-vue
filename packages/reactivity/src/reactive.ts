@@ -1,6 +1,10 @@
 import { isObject } from "@minivue/shared";
 import { mutableHandlers, ReactiveFlags } from "./baseHandlers";
 
+const isReactive = (value: any) => {
+    return !!(value && value[ReactiveFlags.IS_REACTIVE])
+}
+
 // 缓存
 const reactiveMap = new WeakMap();
 
@@ -31,5 +35,6 @@ const reactive = <T extends object>(target: T): T => {
 // 1. 同一个对象代理多次 -> 返回同一个代理
 // 2. 代理对象再次被代理 -> 直接返回
 export {
-    reactive
+    reactive,
+    isReactive
 }
