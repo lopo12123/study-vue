@@ -1,4 +1,6 @@
 import { track, trigger } from "./effect";
+import { isObject } from "@minivue/shared";
+import { reactive } from "./reactive";
 
 // 代理标识
 export const enum ReactiveFlags {
@@ -14,7 +16,14 @@ export const mutableHandlers = {
         track(target, 'get', key)
 
         // 在代理对象上取值, 此处可以监控到用户取值
-        return Reflect.get(target, key, receiver)
+        let res = Reflect.get(target, key, receiver)
+
+        // 对象嵌套多层, 需要递归实现深度代理
+        if(isObject(res)) {
+            return reactive(res)
+        }
+
+        return res
     },
     set(target: any, key: string | symbol, value: any, receiver: any): boolean {
         let oldValue = target[key]
