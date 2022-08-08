@@ -18,6 +18,6 @@ export const patchProp = (el, key, prevValue, nextValue) => {
     }
     // 普通属性
     else {
-        patchAttr()
+        patchAttr(el, key, nextValue)
     }
 }
