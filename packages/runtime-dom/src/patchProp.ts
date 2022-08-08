@@ -14,7 +14,7 @@ export const patchProp = (el, key, prevValue, nextValue) => {
     }
     // event
     else if (/^on[^a-z]/.test(key)) {
-        patchEvent()
+        patchEvent(el, key, nextValue)
     }
     // 普通属性
     else {
