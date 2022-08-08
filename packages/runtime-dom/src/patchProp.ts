@@ -10,7 +10,7 @@ export const patchProp = (el, key, prevValue, nextValue) => {
     }
     // 样式 el.style
     else if (key === 'style') {
-        patchStyle()
+        patchStyle(el, prevValue, nextValue)
     }
     // event
     else if (/^on[^a-z]/.test(key)) {
