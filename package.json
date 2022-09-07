@@ -6,7 +6,8 @@
     "main": "index.js",
     "scripts": {
         "dev:reactivity": "node scripts/dev.js reactivity -f global",
-        "dev:runtime-dom": "node scripts/dev.js runtime-dom -f global"
+        "dev:runtime-dom": "node scripts/dev.js runtime-dom -f global",
+        "dev:runtime-core": "node scripts/dev.js runtime-core -f global"
     },
     "keywords": [],
     "workspaces": [
