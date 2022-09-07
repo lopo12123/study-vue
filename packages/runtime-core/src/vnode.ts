@@ -5,6 +5,7 @@ export const isVnode = (value: any) => {
 }
 
 // 虚拟节点有很多: 组件、元素、文本 ...
+// children: string | Array | null
 export const createVnode = (type, props, children = null) => {
     // 组合方案 shapeFlag 想知道一个元素中包含的是多个子节点还是一个子节点
     let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0
